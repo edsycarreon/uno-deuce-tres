@@ -7,7 +7,7 @@ export const userProfileSchema = z.object({
     .min(1, "Display name is required")
     .max(30, "Display name must be 30 characters or less"),
   defaultPrivacy: z.boolean().default(true),
-  timezone: z.string().min(1, "Timezone is required"),
+  timezone: z.string().optional(), // Made optional since we'll auto-detect
 });
 
 export type UserProfileFormData = z.infer<typeof userProfileSchema>;
@@ -60,7 +60,7 @@ export const signUpSchema = z.object({
     .string()
     .min(1, "Display name is required")
     .max(30, "Display name must be 30 characters or less"),
-  timezone: z.string().min(1, "Timezone is required"),
+  timezone: z.string().optional(), // Made optional since we'll auto-detect
 });
 
 export type SignUpFormData = z.infer<typeof signUpSchema>;

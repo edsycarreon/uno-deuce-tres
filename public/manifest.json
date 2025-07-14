@@ -1,0 +1,16 @@
+{
+  "name": "Poop Tracker",
+  "short_name": "PoopTracker",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "description": "Track your bathroom activities and compete with friends!",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

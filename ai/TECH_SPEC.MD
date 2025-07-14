@@ -1,0 +1,472 @@
+# Poop Tracker App - Technical Specification
+
+## Overview
+
+A social poop tracking application built with Next.js, allowing users to log their bathroom activities and compete with friends in groups through leaderboards.
+
+## Technology Stack
+
+- **Framework**: Next.js 14+ (App Router)
+- **UI Components**: Shadcn/ui
+- **Styling**: Tailwind CSS
+- **Form Management**: React Hook Form
+- **Validation**: Zod
+- **Database**: Firestore (Firebase)
+- **Authentication**: Firebase Auth
+- **Deployment**: Vercel (recommended)
+
+## Coding Principles & Standards
+
+### Design System & Styling
+
+- **All colors, shadows, borders, and radii must use the CSS custom properties and design tokens defined in `src/app/globals.css`**.
+- **Component backgrounds, text, borders, and focus rings should reference these variables for both light and dark mode.**
+- **Do not use hardcoded color values in components; always use the design tokens.**
+- **Tailwind utility classes should be combined with custom property references for maximum flexibility and theme consistency.**
+- **The overall visual style is based on the [Neobrutalism design system](https://www.neobrutalism.dev/), which emphasizes bold colors, strong borders, and playful, accessible UI.**
+
+### Architecture Principles
+
+- **DRY (Don't Repeat Yourself)**: Extract common logic into reusable hooks, utilities, and components
+- **KISS (Keep It Simple, Stupid)**: Favor simple, readable solutions over complex abstractions
+- **SOLID**: Follow single responsibility, open/closed, Liskov substitution, interface segregation, and dependency inversion principles
+
+### Code Organization
+
+```
+src/
+├── app/                    # Next.js App Router pages
+├── components/            # Reusable UI components
+│   ├── ui/               # Shadcn/ui components
+│   ├── forms/            # Form components
+│   └── layout/           # Layout components
+├── lib/                  # Utility functions and configurations
+│   ├── firebase/         # Firebase configuration and helpers
+│   ├── validations/      # Zod schemas
+│   └── utils/           # General utilities
+├── hooks/                # Custom React hooks
+├── types/                # TypeScript type definitions
+└── constants/            # Application constants
+```
+
+### Naming Conventions
+
+- **Files**: kebab-case (`user-profile.tsx`)
+- **Components**: PascalCase (`UserProfile`)
+- **Functions/Variables**: camelCase (`getUserData`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_GROUP_SIZE`)
+- **Types/Interfaces**: PascalCase with descriptive names (`UserDocument`, `PoopLogDocument`)
+
+### Component Guidelines
+
+- Use functional components with hooks
+- Implement proper TypeScript typing
+- Follow single responsibility principle
+- Use composition over inheritance
+- Implement proper error boundaries
+
+## Core Features Specification
+
+### 1. User Authentication
+
+**Requirements:**
+
+- Firebase Auth integration
+- Email/password authentication
+- User profile creation with display name
+- Protected routes for authenticated users
+
+**Implementation:**
+
+- Custom hook `useAuth()` for authentication state
+- Protected route wrapper component
+- User context provider
+- Automatic redirect logic
+
+### 2. One-Tap Poop Logging
+
+**Requirements:**
+
+- Single button press to log a poop
+- Timestamp automatically recorded
+- Privacy toggle (private/public)
+- Optimistic UI updates
+
+**Data Structure:**
+
+```typescript
+interface PoopLogDocument {
+  id: string;
+  userId: string;
+  timestamp: Timestamp;
+  isPublic: boolean;
+  createdAt: Timestamp;
+  dayKey: string; // "YYYY-MM-DD"
+  weekKey: string; // "YYYY-W##"
+  monthKey: string; // "YYYY-MM"
+  groups: string[]; // Groups this log contributes to
+}
+```
+
+**Implementation:**
+
+- Custom hook `usePoopLogger()` for logging functionality
+- Optimistic updates with rollback on failure
+- Toast notifications for success/error states
+- Debounced logging to prevent spam
+
+### 3. Group Management
+
+**Requirements:**
+
+- Create new groups with unique names
+- Join groups via invite codes
+- Leave groups
+- View group member lists
+- Basic group settings
+
+**Data Structure:**
+
+```typescript
+interface GroupDocument {
+  id: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  createdAt: Timestamp;
+  inviteCode: string;
+  settings: {
+    maxMembers: number;
+    isPrivate: boolean;
+    allowSelfJoin: boolean;
+  };
+  stats: {
+    memberCount: number;
+    totalLogs: number;
+    lastActivity: Timestamp;
+  };
+  memberIds: string[];
+}
+
+interface GroupMemberDocument {
+  userId: string;
+  displayName: string;
+  role: "admin" | "member";
+  joinedAt: Timestamp;
+  lastActivity: Timestamp;
+  stats: {
+    totalLogs: number;
+    currentStreak: number;
+    longestStreak: number;
+  };
+}
+```
+
+**Implementation:**
+
+- Custom hook `useGroups()` for group operations
+- Unique invite code generation
+- Group validation and error handling
+- Member management utilities
+
+### 4. Global Poop Record
+
+**Requirements:**
+
+- Single source of truth for user's poop logs
+- Efficient querying for different time ranges
+- Privacy-aware data fetching
+
+**Implementation:**
+
+- Custom hook `usePoopLogs()` for data fetching
+- Efficient Firestore queries with pagination
+- Real-time updates using Firestore listeners
+- Privacy filtering at query level
+
+### 5. Leaderboards & Aggregations
+
+**Requirements:**
+
+- Frequency-based rankings per group
+- Real-time updates
+- Only include public logs
+- Time-based filtering (daily, weekly, monthly)
+- Global and group daily aggregations
+
+**Data Structure:**
+
+```typescript
+interface DailyAggregationDocument {
+  date: string; // "YYYY-MM-DD"
+  timestamp: Timestamp;
+  globalStats: {
+    totalLogs: number;
+    activeUsers: number;
+    totalUsers: number;
+  };
+  groupStats: {
+    [groupId: string]: {
+      totalLogs: number;
+      activeMembers: number;
+      leaderboard: {
+        userId: string;
+        displayName: string;
+        count: number;
+      }[];
+    };
+  };
+}
+```
+
+**Implementation:**
+
+- Custom hook `useLeaderboard()` for leaderboard data
+- Efficient aggregation queries
+- Real-time leaderboard updates
+- Caching for performance optimization
+
+### 6. User Profiles & Stats
+
+**Requirements:**
+
+- Display name management
+- Basic user information
+- Profile picture support (future)
+- Privacy settings
+- User stats (streaks, total logs, etc.)
+
+**Data Structure:**
+
+```typescript
+interface UserDocument {
+  id: string;
+  email: string;
+  displayName: string;
+  createdAt: Timestamp;
+  lastActive: Timestamp;
+  settings: {
+    defaultPrivacy: boolean;
+    notifications: boolean;
+    timezone: string;
+  };
+  stats: {
+    totalLogs: number;
+    publicLogs: number;
+    currentStreak: number;
+    longestStreak: number;
+    firstLogDate: Timestamp;
+  };
+  groups: string[];
+}
+```
+
+### 7. Invite Codes
+
+**Requirements:**
+
+- Unique, time-limited, and usage-limited invite codes for groups
+
+**Data Structure:**
+
+```typescript
+interface InviteCodeDocument {
+  code: string;
+  groupId: string;
+  createdAt: Timestamp;
+  expiresAt?: Timestamp;
+  maxUses?: number;
+  currentUses: number;
+  isActive: boolean;
+}
+```
+
+### 8. User Daily Stats
+
+**Requirements:**
+
+- Track daily log counts and group contributions per user
+
+**Data Structure:**
+
+```typescript
+interface UserDailyStatsDocument {
+  date: string; // "YYYY-MM-DD"
+  userId: string;
+  totalLogs: number;
+  publicLogs: number;
+  groups: {
+    [groupId: string]: {
+      logs: number;
+    };
+  };
+  timestamps: Timestamp[];
+}
+```
+
+## Database Schema (Firestore)
+
+### Collections Structure
+
+```
+users/
+  {userId}: UserDocument
+    poopLogs/
+      {logId}: PoopLogDocument
+    dailyStats/
+      {dateKey}: UserDailyStatsDocument
+groups/
+  {groupId}: GroupDocument
+    members/
+      {userId}: GroupMemberDocument
+dailyAggregations/
+  {dateKey}: DailyAggregationDocument
+inviteCodes/
+  {inviteCode}: InviteCodeDocument
+```
+
+### Security Rules
+
+- Users can only read/write their own data
+- Group members can read group data and member lists
+- Public poop logs are readable by group members
+- Private poop logs are only readable by the owner
+- Daily aggregations and invite codes are read-only for authenticated users
+
+## Form Validation with Zod
+
+### Schema Examples
+
+```typescript
+const createGroupSchema = z.object({
+  name: z.string().min(1, "Group name is required").max(50),
+  isPrivate: z.boolean().default(false),
+  maxMembers: z.number().min(2).max(100).default(20),
+});
+
+const userProfileSchema = z.object({
+  displayName: z.string().min(1, "Display name is required").max(30),
+  defaultPrivacy: z.boolean().default(true),
+  timezone: z.string().min(1, "Timezone is required"),
+});
+```
+
+### Form Implementation
+
+- Use React Hook Form with Zod resolver
+- Implement proper error handling and display
+- Use Shadcn/ui form components
+- Implement debounced validation for better UX
+
+## Performance Considerations
+
+### Database Optimization
+
+- Use composite indexes for efficient queries
+- Implement pagination for large datasets
+- Use real-time listeners judiciously
+- Cache frequently accessed data
+- Denormalize for fast reads (e.g., displayName in group members)
+
+### Frontend Optimization
+
+- Implement React.memo for expensive components
+- Use useCallback and useMemo appropriately
+- Implement proper loading states
+- Use Suspense for code splitting
+
+## Error Handling
+
+### Error Types
+
+- Authentication errors
+- Network errors
+- Validation errors
+- Database errors
+
+### Implementation
+
+- Custom error boundary components
+- Centralized error logging
+- User-friendly error messages
+- Graceful degradation
+
+## Testing Strategy
+
+### Unit Testing
+
+- Test utility functions
+- Test custom hooks
+- Test form validation schemas
+- Test component logic
+
+### Integration Testing
+
+- Test Firebase integration
+- Test form submissions
+- Test navigation flows
+- Test real-time updates
+
+## Deployment Configuration
+
+### Environment Variables
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+```
+
+### Build Configuration
+
+- Enable TypeScript strict mode
+- Configure ESLint with recommended rules
+- Set up Prettier for code formatting
+- Configure path aliases for clean imports
+
+## Development Workflow
+
+### Code Quality
+
+- Use TypeScript strict mode
+- Implement ESLint rules
+- Use Prettier for formatting
+- Pre-commit hooks for quality checks
+
+### Git Workflow
+
+- Feature branch workflow
+- Descriptive commit messages
+- Pull request reviews
+- Automated testing on CI/CD
+
+## API Design Patterns
+
+### Custom Hooks Pattern
+
+```typescript
+// Example: usePoopLogger hook
+export const usePoopLogger = () => {
+  const { user } = useAuth();
+  const [isLogging, setIsLogging] = useState(false);
+
+  const logPoop = async (isPublic: boolean) => {
+    // Implementation
+  };
+
+  return { logPoop, isLogging };
+};
+```
+
+### Error Handling Pattern
+
+```typescript
+type AsyncResult<T> = {
+  data: T | null;
+  error: string | null;
+  isLoading: boolean;
+};
+```

@@ -93,7 +93,6 @@ export default function SignUpPage() {
         },
         onError: (error) => {
           setError(error.message || "Sign up failed");
-          toast.error(error.message || "Sign up failed");
         },
       }
     );

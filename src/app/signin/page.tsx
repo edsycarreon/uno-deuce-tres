@@ -78,7 +78,6 @@ export default function SignInPage() {
         },
         onError: (error) => {
           setError(error.message || "Sign in failed");
-          toast.error(error.message || "Sign in failed");
         },
       }
     );

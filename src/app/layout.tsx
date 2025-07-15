@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ReactQueryProvider } from "@/lib/react-query/provider";
+import { ErrorProvider } from "@/contexts/ErrorContext";
+import { GlobalErrorModal } from "@/components/ui/error-modal";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,8 +34,11 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} h-full antialiased`}>
         <ReactQueryProvider>
-          {children}
-          <Toaster />
+          <ErrorProvider>
+            {children}
+            <Toaster />
+            <GlobalErrorModal />
+          </ErrorProvider>
         </ReactQueryProvider>
       </body>
     </html>

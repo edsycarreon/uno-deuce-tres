@@ -25,16 +25,20 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      user: { uid: userRecord.uid, email: userRecord.email },
+      user: {
+        uid: userRecord.uid,
+        email: userRecord.email,
+        displayName: userRecord.displayName,
+      },
     });
   } catch (error: unknown) {
-    console.error("Signin error:", error);
+    console.error("Token verification error:", error);
 
     const errorInfo = handleFirebaseError(error);
 
     return NextResponse.json(
       { success: false, error: errorInfo.message },
-      { status: 400 }
+      { status: 401 }
     );
   }
 }

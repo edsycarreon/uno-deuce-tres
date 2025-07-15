@@ -7,16 +7,21 @@ import { useLogPoop, usePoopLogs } from "@/hooks/usePoopLogs";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export function PoopLogger() {
   const [isPublic, setIsPublic] = useState(false);
   const { user } = useAuth();
   const { mutate: logPoop, isPending } = useLogPoop();
   const { data: poopLogsData, isLoading: isLoadingLogs } = usePoopLogs(10);
+  const { handleError } = useErrorHandler();
 
   const handleLogPoop = () => {
     if (!user) {
-      toast.error("You must be logged in to log a poop");
+      handleError(
+        new Error("You must be logged in to log a poop"),
+        "Authentication Required"
+      );
       return;
     }
 
@@ -40,7 +45,7 @@ export function PoopLogger() {
         setIsPublic(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to log poop");
+        handleError(error, "Failed to log poop");
       },
     });
   };

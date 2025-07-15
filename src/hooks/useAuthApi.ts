@@ -12,26 +12,66 @@ const signUpApi = async ({
   displayName: string;
   timezone?: string;
 }) => {
-  const response = await fetch("/api/auth/signup", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  // Use Firebase Auth SDK for client-side user creation
+  const { createUserWithEmailAndPassword } = await import("firebase/auth");
+  const { auth } = await import("@/lib/firebase/config");
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
       email,
-      password,
-      displayName,
-      timezone,
-    }),
-  });
+      password
+    );
 
-  const data = await response.json();
+    // Get the ID token for server-side profile creation
+    const idToken = await userCredential.user.getIdToken();
 
-  if (!response.ok) {
-    throw new Error(data.error || "Sign up failed");
+    // Create user profile on server
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        displayName,
+        timezone,
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Profile creation failed");
+    }
+
+    return {
+      success: true,
+      user: {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+      },
+    };
+  } catch (error) {
+    // Handle Firebase Auth errors
+    if (error && typeof error === "object" && "code" in error) {
+      const errorCode = error.code as string;
+      switch (errorCode) {
+        case "auth/email-already-in-use":
+          throw new Error("An account with this email already exists");
+        case "auth/invalid-email":
+          throw new Error("Please enter a valid email address");
+        case "auth/weak-password":
+          throw new Error(
+            "Password is too weak. Please choose a stronger password"
+          );
+        case "auth/network-request-failed":
+          throw new Error("Network error. Please check your connection");
+        default:
+          throw new Error("Sign up failed");
+      }
+    }
+    throw error;
   }
-
-  return data;
 };
 
 const signInApi = async ({
@@ -41,24 +81,62 @@ const signInApi = async ({
   email: string;
   password: string;
 }) => {
-  const response = await fetch("/api/auth/signin", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  // Use Firebase Auth SDK for client-side authentication
+  const { signInWithEmailAndPassword } = await import("firebase/auth");
+  const { auth } = await import("@/lib/firebase/config");
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
       email,
-      password,
-    }),
-  });
+      password
+    );
 
-  const data = await response.json();
+    // Get the ID token for server-side verification if needed
+    const idToken = await userCredential.user.getIdToken();
 
-  if (!response.ok) {
-    throw new Error(data.error || "Sign in failed");
+    // Optionally verify with server
+    const response = await fetch("/api/auth/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Authentication verification failed");
+    }
+
+    return {
+      success: true,
+      user: {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+      },
+    };
+  } catch (error) {
+    // Handle Firebase Auth errors
+    if (error && typeof error === "object" && "code" in error) {
+      const errorCode = error.code as string;
+      switch (errorCode) {
+        case "auth/user-not-found":
+          throw new Error("No account found with this email address");
+        case "auth/wrong-password":
+          throw new Error("Incorrect password. Please try again.");
+        case "auth/invalid-email":
+          throw new Error("Please enter a valid email address");
+        case "auth/too-many-requests":
+          throw new Error("Too many failed attempts. Please try again later");
+        case "auth/network-request-failed":
+          throw new Error("Network error. Please check your connection");
+        default:
+          throw new Error("Sign in failed");
+      }
+    }
+    throw error;
   }
-
-  return data;
 };
 
 // React Query hooks

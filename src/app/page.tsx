@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
   Card,
@@ -15,14 +17,64 @@ import { Calendar } from "lucide-react";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { user, userProfile, isAuthenticated, logout, loading } = useAuth();
+  const router = useRouter();
 
-  const mockUser = {
-    displayName: "John Doe",
-    email: "john@example.com",
-  };
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--color-main)] mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  // If not authenticated, show landing page with Firebase test
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-[color:var(--color-main)] to-[color:var(--color-main-hover)] text-[color:var(--color-main-foreground)] py-20">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+              Track Your Poops! 💩
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 opacity-90">
+              The ultimate social poop tracking app. Log, compete, and have fun
+              with friends!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                className="bg-[color:var(--color-background)] text-[color:var(--color-foreground)] hover:bg-[color:var(--color-background-hover)] border-2 border-[color:var(--color-border)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                onClick={() => router.push("/signup")}
+              >
+                Get Started
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-[color:var(--color-border)] text-[color:var(--color-main-foreground)] hover:bg-[color:var(--color-background)] hover:text-[color:var(--color-foreground)]"
+                onClick={() => router.push("/signin")}
+              >
+                Sign In
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated, show dashboard
+  const handleLogout = async () => {
+    const result = await logout();
+    if (result.success) {
+      router.push("/signin");
+    }
   };
 
   const handleAddClick = () => {
@@ -37,7 +89,12 @@ export default function HomePage() {
     <AppLayout
       activeTab={activeTab}
       onTabChange={handleTabChange}
-      user={mockUser}
+      user={
+        userProfile || {
+          displayName: user?.email || "User",
+          email: user?.email || "",
+        }
+      }
       onLogout={handleLogout}
     >
       <div className="flex flex-col min-h-[60vh] h-full justify-between gap-4">
@@ -52,9 +109,11 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">
+                  {userProfile?.stats.totalLogs || 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  +1 from yesterday
+                  {userProfile?.stats.currentStreak || 0} day streak
                 </p>
               </CardContent>
             </Card>
@@ -65,7 +124,9 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">7</div>
+                <div className="text-2xl font-bold">
+                  {userProfile?.stats.currentStreak || 0}
+                </div>
                 <p className="text-xs text-muted-foreground">days in a row</p>
               </CardContent>
             </Card>
@@ -81,26 +142,40 @@ export default function HomePage() {
               <CardDescription>Your latest bathroom visits</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium">Just now</p>
-                    <p className="text-xs text-muted-foreground">Public log</p>
-                  </div>
+              {userProfile?.stats.totalLogs === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    No logs yet. Start tracking!
+                  </p>
                 </div>
-                <Badge variant="secondary">Public</Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium">2 hours ago</p>
-                    <p className="text-xs text-muted-foreground">Private log</p>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div>
+                        <p className="font-medium">Just now</p>
+                        <p className="text-xs text-muted-foreground">
+                          Public log
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">Public</Badge>
                   </div>
-                </div>
-                <Badge variant="outline">Private</Badge>
-              </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div>
+                        <p className="font-medium">2 hours ago</p>
+                        <p className="text-xs text-muted-foreground">
+                          Private log
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="outline">Private</Badge>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

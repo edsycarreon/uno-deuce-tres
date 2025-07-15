@@ -17,11 +17,17 @@ import {
 import { Eye, EyeOff, Mail, User, Lock } from "lucide-react";
 import { RootLayout } from "@/components/layout/root-layout";
 import { cn, detectTimezone } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useSignUp } from "@/hooks/useAuthApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, loading } = useAuth();
+  const { mutate: signUp, isPending } = useSignUp();
+  const router = useRouter();
 
   const {
     register,
@@ -38,30 +44,59 @@ export default function SignUpPage() {
     setValue("timezone", timezone);
   }, [setValue]);
 
+  // Redirect if already authenticated (only after loading is complete)
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, loading, router]);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <RootLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--color-main)] mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </RootLayout>
+    );
+  }
+
+  // Don't show sign-up form if already authenticated
+  if (isAuthenticated) {
+    return null; // Will redirect
+  }
+
   const onSubmit = async (data: SignUpFormData) => {
-    setIsLoading(true);
     setError(null);
 
-    try {
-      // Ensure timezone is set (fallback to UTC if not detected)
-      const finalData = {
-        ...data,
-        timezone: data.timezone || "UTC",
-      };
+    // Ensure timezone is set (fallback to UTC if not detected)
+    const finalData = {
+      ...data,
+      timezone: data.timezone || "UTC",
+    };
 
-      // TODO: Implement actual sign-up logic with Firebase
-      console.log("Sign up data:", finalData);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // TODO: Redirect to dashboard or show success
-      console.log("Sign up successful!");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign up failed");
-    } finally {
-      setIsLoading(false);
-    }
+    signUp(
+      {
+        email: finalData.email,
+        password: finalData.password,
+        displayName: finalData.displayName,
+        timezone: finalData.timezone,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Account created successfully!");
+          router.push("/");
+        },
+        onError: (error) => {
+          setError(error.message || "Sign up failed");
+          toast.error(error.message || "Sign up failed");
+        },
+      }
+    );
   };
 
   return (
@@ -181,10 +216,10 @@ export default function SignUpPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isPending}
                 className="w-full bg-[color:var(--color-main)] text-[color:var(--color-main-foreground)] hover:bg-[color:var(--color-main-hover)] border-2 border-[color:var(--color-border)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isPending ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 

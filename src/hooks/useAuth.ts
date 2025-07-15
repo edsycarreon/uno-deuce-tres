@@ -5,16 +5,17 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  AuthError,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
-import { UserProfile } from "@/types";
+import { UserDocument } from "@/types";
 import { COLLECTIONS } from "@/constants";
-import { Timestamp } from "firebase/firestore";
+import { detectTimezone } from "@/lib/utils";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserDocument | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export const useAuth = () => {
         try {
           const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, user.uid));
           if (userDoc.exists()) {
-            setUserProfile(userDoc.data() as UserProfile);
+            setUserProfile(userDoc.data() as UserDocument);
           }
         } catch (error: unknown) {
           console.error("Error fetching user profile:", error);
@@ -46,8 +47,32 @@ export const useAuth = () => {
       const result = await signInWithEmailAndPassword(auth, email, password);
       return { success: true, user: result.user };
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "An unknown error occurred";
+      let errorMessage = "An unknown error occurred";
+
+      if (error instanceof Error) {
+        // Handle Firebase Auth specific errors
+        const authError = error as AuthError;
+        switch (authError.code) {
+          case "auth/user-not-found":
+            errorMessage = "No account found with this email address";
+            break;
+          case "auth/wrong-password":
+            errorMessage = "Incorrect password";
+            break;
+          case "auth/invalid-email":
+            errorMessage = "Invalid email address";
+            break;
+          case "auth/too-many-requests":
+            errorMessage = "Too many failed attempts. Please try again later";
+            break;
+          case "auth/network-request-failed":
+            errorMessage = "Network error. Please check your connection";
+            break;
+          default:
+            errorMessage = error.message;
+        }
+      }
+
       return { success: false, error: errorMessage };
     }
   };
@@ -55,7 +80,8 @@ export const useAuth = () => {
   const signUp = async (
     email: string,
     password: string,
-    displayName: string
+    displayName: string,
+    timezone?: string
   ) => {
     try {
       const result = await createUserWithEmailAndPassword(
@@ -64,24 +90,59 @@ export const useAuth = () => {
         password
       );
 
+      // Auto-detect timezone if not provided
+      const userTimezone = timezone || detectTimezone();
+
       // Create user profile in Firestore
-      const userProfile: UserProfile = {
+      const userProfile = {
         id: result.user.uid,
-        displayName,
         email,
-        createdAt: Timestamp.now(),
+        displayName,
+        createdAt: serverTimestamp(),
+        lastActive: serverTimestamp(),
         settings: {
           defaultPrivacy: true,
           notifications: true,
+          timezone: userTimezone,
         },
+        stats: {
+          totalLogs: 0,
+          publicLogs: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          firstLogDate: null,
+        },
+        groups: [],
       };
 
       await setDoc(doc(db, COLLECTIONS.USERS, result.user.uid), userProfile);
 
       return { success: true, user: result.user };
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "An unknown error occurred";
+      let errorMessage = "An unknown error occurred";
+
+      if (error instanceof Error) {
+        // Handle Firebase Auth specific errors
+        const authError = error as AuthError;
+        switch (authError.code) {
+          case "auth/email-already-in-use":
+            errorMessage = "An account with this email already exists";
+            break;
+          case "auth/invalid-email":
+            errorMessage = "Invalid email address";
+            break;
+          case "auth/weak-password":
+            errorMessage =
+              "Password is too weak. Please choose a stronger password";
+            break;
+          case "auth/network-request-failed":
+            errorMessage = "Network error. Please check your connection";
+            break;
+          default:
+            errorMessage = error.message;
+        }
+      }
+
       return { success: false, error: errorMessage };
     }
   };

@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can read and write their own poop logs
+    match /users/{userId}/poopLogs/{logId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can read and write their own daily stats
+    match /users/{userId}/dailyStats/{dateKey} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Groups - users can read groups they're members of, admins can write
+    match /groups/{groupId} {
+      allow read: if request.auth != null && 
+        (resource.data.memberIds[request.auth.uid] != null || 
+         resource.data.createdBy == request.auth.uid);
+      allow write: if request.auth != null && 
+        (resource.data.createdBy == request.auth.uid || 
+         request.auth.uid in resource.data.memberIds);
+    }
+    
+    // Group members - users can read members of groups they're in
+    match /groups/{groupId}/members/{userId} {
+      allow read: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         exists(/databases/$(database)/documents/groups/$(groupId)) &&
+         get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds[request.auth.uid] != null);
+      allow write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         get(/databases/$(database)/documents/groups/$(groupId)).data.createdBy == request.auth.uid);
+    }
+    
+    // Daily aggregations - anyone can read for leaderboards
+    match /dailyAggregations/{dateKey} {
+      allow read: if true;
+      allow write: if false; // Only backend should write these
+    }
+    
+    // Invite codes - anyone can read to validate
+    match /inviteCodes/{code} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+} 

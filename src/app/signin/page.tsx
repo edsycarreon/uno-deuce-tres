@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, type SignInFormData } from "@/lib/validations/schemas";
@@ -17,11 +17,17 @@ import {
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { RootLayout } from "@/components/layout/root-layout";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useSignIn } from "@/hooks/useAuthApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, loading } = useAuth();
+  const { mutate: signIn, isPending } = useSignIn();
+  const router = useRouter();
 
   const {
     register,
@@ -31,24 +37,51 @@ export default function SignInPage() {
     resolver: zodResolver(signInSchema),
   });
 
+  // Redirect if already authenticated (only after loading is complete)
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, loading, router]);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <RootLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--color-main)] mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </RootLayout>
+    );
+  }
+
+  // Don't show sign-in form if already authenticated
+  if (isAuthenticated) {
+    return null; // Will redirect
+  }
+
   const onSubmit = async (data: SignInFormData) => {
-    setIsLoading(true);
     setError(null);
 
-    try {
-      // TODO: Implement actual sign-in logic with Firebase
-      console.log("Sign in data:", data);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // TODO: Redirect to dashboard or show success
-      console.log("Sign in successful!");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
-    } finally {
-      setIsLoading(false);
-    }
+    signIn(
+      {
+        email: data.email,
+        password: data.password,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Signed in successfully!");
+          router.push("/");
+        },
+        onError: (error) => {
+          setError(error.message || "Sign in failed");
+          toast.error(error.message || "Sign in failed");
+        },
+      }
+    );
   };
 
   return (
@@ -137,10 +170,10 @@ export default function SignInPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isPending}
                 className="w-full bg-[color:var(--color-main)] text-[color:var(--color-main-foreground)] hover:bg-[color:var(--color-main-hover)] border-2 border-[color:var(--color-border)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isPending ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 

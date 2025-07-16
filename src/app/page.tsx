@@ -26,11 +26,6 @@ export default function HomePage() {
     }
   }, [isAuthenticated, loading, router]);
 
-  if (loading) {
-    // Optionally show a loading spinner
-    return <div>Loading...</div>;
-  }
-
   // If authenticated, show dashboard
   const handleLogout = async () => {
     const result = await logout();

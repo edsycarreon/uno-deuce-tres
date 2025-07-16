@@ -14,11 +14,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
+import { useLogPoop } from "@/hooks/usePoopLogs";
+import { format, getISOWeek } from "date-fns";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { Timestamp } from "firebase/firestore";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { user, userProfile, isAuthenticated, logout, loading } = useAuth();
   const router = useRouter();
+  const { mutate: logPoop, status: logPoopStatus } = useLogPoop();
+  const { handleError } = useErrorHandler();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -35,7 +41,34 @@ export default function HomePage() {
   };
 
   const handleAddClick = () => {
-    console.log("Add poop log clicked");
+    if (!user) return;
+    try {
+      const now = new Date();
+      const timestamp = Timestamp.fromDate(now);
+      const createdAt = Timestamp.fromDate(now);
+      const dayKey = format(now, "yyyy-MM-dd");
+      const weekKey = `${format(now, "yyyy")}-W${getISOWeek(now)}`;
+      const monthKey = format(now, "yyyy-MM");
+      logPoop(
+        {
+          userId: user.uid,
+          timestamp,
+          isPublic: true,
+          createdAt,
+          dayKey,
+          weekKey,
+          monthKey,
+          groups: [],
+        },
+        {
+          onError: (error) => {
+            handleError(error, "Failed to log poop");
+          },
+        }
+      );
+    } catch (error) {
+      handleError(error, "Failed to log poop");
+    }
   };
 
   const handleTabChange = (tab: string) => {
@@ -145,8 +178,13 @@ export default function HomePage() {
           style={{ boxShadow: "var(--shadow-shadow)" }}
           onClick={handleAddClick}
           aria-label="Log poop"
+          disabled={logPoopStatus === "pending"}
         >
-          💩
+          {logPoopStatus === "pending" ? (
+            <span className="animate-spin">💩</span>
+          ) : (
+            "💩"
+          )}
         </Button>
       </div>
     </AppLayout>

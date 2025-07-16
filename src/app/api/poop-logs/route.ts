@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the poop using the existing Firebase function
-    await logPoopWithUpdates(userId, logData);
+    await logPoopWithUpdates(adminDb, userId, logData);
 
     return NextResponse.json({ success: true });
   } catch (error) {

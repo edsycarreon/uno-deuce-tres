@@ -14,10 +14,33 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
-import { useLogPoop } from "@/hooks/usePoopLogs";
-import { format, getISOWeek } from "date-fns";
+import { useLogPoop, usePoopLogs } from "@/hooks/usePoopLogs";
+import { format, getISOWeek, formatDistanceToNow } from "date-fns";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { Timestamp } from "firebase/firestore";
+import PoopSpinner from "../components/ui/PoopSpinner";
+import { getPoopLogKeysAndTimestamps } from "@/lib/utils/poopLogKeys";
+
+// Helper to convert Firestore Timestamp or Date/string to JS Date
+interface FirestoreTimestampLike {
+  seconds: number;
+  nanoseconds: number;
+}
+function isFirestoreTimestampLike(ts: unknown): ts is FirestoreTimestampLike {
+  return (
+    typeof ts === "object" &&
+    ts !== null &&
+    "seconds" in ts &&
+    typeof (ts as { seconds: unknown }).seconds === "number" &&
+    "nanoseconds" in ts &&
+    typeof (ts as { nanoseconds: unknown }).nanoseconds === "number"
+  );
+}
+function getLogDate(ts: unknown): Date {
+  if (isFirestoreTimestampLike(ts)) return new Date(ts.seconds * 1000);
+  if (typeof ts === "string" || ts instanceof Date) return new Date(ts);
+  return new Date();
+}
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -25,6 +48,17 @@ export default function HomePage() {
   const router = useRouter();
   const { mutate: logPoop, status: logPoopStatus } = useLogPoop();
   const { handleError } = useErrorHandler();
+  const {
+    data: poopLogsData,
+    isLoading: logsLoading,
+    error: logsError,
+  } = usePoopLogs(10);
+  const logs = (poopLogsData?.logs ||
+    []) as import("@/types").PoopLogDocument[];
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const todaysLogs = logs.filter(
+    (log: import("@/types").PoopLogDocument) => log.dayKey === todayKey
+  );
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -43,12 +77,8 @@ export default function HomePage() {
   const handleAddClick = () => {
     if (!user) return;
     try {
-      const now = new Date();
-      const timestamp = Timestamp.fromDate(now);
-      const createdAt = Timestamp.fromDate(now);
-      const dayKey = format(now, "yyyy-MM-dd");
-      const weekKey = `${format(now, "yyyy")}-W${getISOWeek(now)}`;
-      const monthKey = format(now, "yyyy-MM");
+      const { dayKey, weekKey, monthKey, timestamp, createdAt } =
+        getPoopLogKeysAndTimestamps(new Date());
       logPoop(
         {
           userId: user.uid,
@@ -99,9 +129,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {userProfile?.stats.totalLogs || 0}
-                </div>
+                <div className="text-2xl font-bold">{todaysLogs.length}</div>
                 <p className="text-xs text-muted-foreground">
                   {userProfile?.stats.currentStreak || 0} day streak
                 </p>
@@ -132,39 +160,49 @@ export default function HomePage() {
               <CardDescription>Your latest bathroom visits</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {userProfile?.stats.totalLogs === 0 ? (
+              {logsLoading || !poopLogsData ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <PoopSpinner />
+                </div>
+              ) : logsError ? (
+                <div className="text-center py-8 text-red-500">
+                  Failed to load logs
+                </div>
+              ) : logs.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">
                     No logs yet. Start tracking!
                   </p>
                 </div>
               ) : (
-                <>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div>
-                        <p className="font-medium">Just now</p>
-                        <p className="text-xs text-muted-foreground">
-                          Public log
-                        </p>
+                logs.map((log: import("@/types").PoopLogDocument) => {
+                  const logDate = getLogDate(log.timestamp);
+                  return (
+                    <div
+                      key={log.id}
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-2 h-2 ${
+                            log.isPublic ? "bg-green-500" : "bg-blue-500"
+                          } rounded-full`}
+                        ></div>
+                        <div>
+                          <p className="font-medium">
+                            {formatDistanceToNow(logDate, { addSuffix: true })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {log.isPublic ? "Public log" : "Private log"}
+                          </p>
+                        </div>
                       </div>
+                      <Badge variant={log.isPublic ? "secondary" : "outline"}>
+                        {log.isPublic ? "Public" : "Private"}
+                      </Badge>
                     </div>
-                    <Badge variant="secondary">Public</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <div>
-                        <p className="font-medium">2 hours ago</p>
-                        <p className="text-xs text-muted-foreground">
-                          Private log
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="outline">Private</Badge>
-                  </div>
-                </>
+                  );
+                })
               )}
             </CardContent>
           </Card>

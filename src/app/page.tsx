@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -20,53 +20,15 @@ export default function HomePage() {
   const { user, userProfile, isAuthenticated, logout, loading } = useAuth();
   const router = useRouter();
 
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--color-main)] mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace("/signin");
+    }
+  }, [isAuthenticated, loading, router]);
 
-  // If not authenticated, show landing page with Firebase test
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-[color:var(--color-main)] to-[color:var(--color-main-hover)] text-[color:var(--color-main-foreground)] py-20">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              Track Your Poops! 💩
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90">
-              The ultimate social poop tracking app. Log, compete, and have fun
-              with friends!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                className="bg-[color:var(--color-background)] text-[color:var(--color-foreground)] hover:bg-[color:var(--color-background-hover)] border-2 border-[color:var(--color-border)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
-                onClick={() => router.push("/signup")}
-              >
-                Get Started
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-[color:var(--color-border)] text-[color:var(--color-main-foreground)] hover:bg-[color:var(--color-background)] hover:text-[color:var(--color-foreground)]"
-                onClick={() => router.push("/signin")}
-              >
-                Sign In
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (loading) {
+    // Optionally show a loading spinner
+    return <div>Loading...</div>;
   }
 
   // If authenticated, show dashboard

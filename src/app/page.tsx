@@ -95,6 +95,7 @@ export default function HomePage() {
           <StatsCards
             todaysLogsCount={todaysLogs.length}
             currentStreak={userProfile?.stats.currentStreak || 0}
+            isLoading={logsLoading || !poopLogsData}
           />
 
           {/* Recent Activity */}

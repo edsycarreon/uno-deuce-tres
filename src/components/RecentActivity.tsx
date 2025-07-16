@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import PoopSpinner from "@/components/ui/PoopSpinner";
 import { Calendar } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import type { PoopLogDocument } from "@/types";
 import { toDateFromFirestore } from "@/lib/utils/utils";
 
@@ -73,7 +73,7 @@ export function RecentActivity({
                       {formatDistanceToNow(logDate, { addSuffix: true })}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {log.isPublic ? "Public log" : "Private log"}
+                      {format(logDate, "MMMM d, yyyy, h:mm a")}
                     </p>
                   </div>
                 </div>

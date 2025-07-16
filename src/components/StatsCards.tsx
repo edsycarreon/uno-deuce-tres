@@ -14,11 +14,7 @@ export function StatsCards({
 }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <TodaysLogsCard
-        todaysLogsCount={todaysLogsCount}
-        currentStreak={currentStreak}
-        isLoading={isLoading}
-      />
+      <TodaysLogsCard todaysLogsCount={todaysLogsCount} isLoading={isLoading} />
       <CurrentStreakCard currentStreak={currentStreak} isLoading={isLoading} />
     </div>
   );

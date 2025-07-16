@@ -3,13 +3,11 @@ import PoopSpinner from "@/components/ui/PoopSpinner";
 
 export interface TodaysLogsCardProps {
   todaysLogsCount?: number;
-  currentStreak?: number;
   isLoading: boolean;
 }
 
 export function TodaysLogsCard({
   todaysLogsCount,
-  currentStreak,
   isLoading,
 }: TodaysLogsCardProps) {
   return (
@@ -25,9 +23,7 @@ export function TodaysLogsCard({
         ) : (
           <>
             <div className="text-2xl font-bold">{todaysLogsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              {currentStreak} day streak
-            </p>
+            <p className="text-xs text-muted-foreground">bombs dropped</p>
           </>
         )}
       </CardContent>

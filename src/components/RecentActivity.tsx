@@ -35,9 +35,9 @@ export function RecentActivity({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
-          Recent Activity
+          Recent Dookie
         </CardTitle>
-        <CardDescription>Your latest bathroom visits</CardDescription>
+        <CardDescription>Your latest nukes</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 h-80 max-h-80 overflow-y-auto">
         {logsLoading || !poopLogsData ? (

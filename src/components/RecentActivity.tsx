@@ -39,7 +39,7 @@ export function RecentActivity({
         </CardTitle>
         <CardDescription>Your latest bathroom visits</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 h-80 max-h-80 overflow-y-auto">
         {logsLoading || !poopLogsData ? (
           <div className="text-center py-8 text-muted-foreground">
             <PoopSpinner />

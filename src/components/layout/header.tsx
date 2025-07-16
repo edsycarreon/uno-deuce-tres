@@ -47,7 +47,7 @@ export function Header({
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="h-9 w-9"
+            className="h-9 w-9 hidden md:inline-flex"
           >
             <Menu className="h-5 w-5" />
           </Button>

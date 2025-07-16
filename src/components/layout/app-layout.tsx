@@ -53,60 +53,62 @@ export function AppLayout({
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Mobile Menu Sheet */}
-      <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <SheetContent side="left" className="w-80">
-          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-          <div className="flex flex-col h-full">
-            {/* User Info */}
-            {user && (
-              <div className="p-4 border-b border-border">
-                <h3 className="font-semibold">{user.displayName}</h3>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <nav className="flex-1 p-4">
-              <div className="space-y-2">
-                {navigationItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-
-                  return (
-                    <Button
-                      key={item.id}
-                      variant={isActive ? "secondary" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => handleTabChange(item.id)}
-                    >
-                      <Icon className="mr-3 h-4 w-4" />
-                      {item.label}
-                    </Button>
-                  );
-                })}
-              </div>
-            </nav>
-
-            {/* Bottom Actions */}
-            <div className="p-4 border-t border-border space-y-2">
-              <Button variant="ghost" className="w-full justify-start">
-                <Settings className="mr-3 h-4 w-4" />
-                Settings
-              </Button>
-              {onLogout && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-destructive"
-                  onClick={onLogout}
-                >
-                  <LogOut className="mr-3 h-4 w-4" />
-                  Logout
-                </Button>
+      <div className="hidden md:block">
+        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <SheetContent side="left" className="w-80">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <div className="flex flex-col h-full">
+              {/* User Info */}
+              {user && (
+                <div className="p-4 border-b border-border">
+                  <h3 className="font-semibold">{user.displayName}</h3>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                </div>
               )}
+
+              {/* Navigation */}
+              <nav className="flex-1 p-4">
+                <div className="space-y-2">
+                  {navigationItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+
+                    return (
+                      <Button
+                        key={item.id}
+                        variant={isActive ? "secondary" : "ghost"}
+                        className="w-full justify-start"
+                        onClick={() => handleTabChange(item.id)}
+                      >
+                        <Icon className="mr-3 h-4 w-4" />
+                        {item.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </nav>
+
+              {/* Bottom Actions */}
+              <div className="p-4 border-t border-border space-y-2">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Settings className="mr-3 h-4 w-4" />
+                  Settings
+                </Button>
+                {onLogout && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-destructive"
+                    onClick={onLogout}
+                  >
+                    <LogOut className="mr-3 h-4 w-4" />
+                    Logout
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
+      </div>
     </RootLayout>
   );
 }

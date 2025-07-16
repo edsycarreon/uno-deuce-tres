@@ -60,7 +60,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby="error-modal">
         <DialogHeader>
           <div className="flex items-center gap-3">
             {getErrorIcon(type)}

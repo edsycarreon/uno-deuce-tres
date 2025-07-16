@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { toDateFromFirestore } from "@/lib/utils/utils";
 
 export function PoopLogger() {
   const [isPublic, setIsPublic] = useState(false);
@@ -114,11 +115,7 @@ export function PoopLogger() {
                     className="flex justify-between items-center p-2 border rounded"
                   >
                     <span>
-                      {log.timestamp instanceof Date
-                        ? log.timestamp.toLocaleString()
-                        : new Date(
-                            log.timestamp.seconds * 1000
-                          ).toLocaleString()}
+                      {toDateFromFirestore(log.timestamp).toLocaleString()}
                     </span>
                     <span
                       className={`px-2 py-1 rounded text-xs ${

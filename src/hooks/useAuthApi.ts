@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 
-// API functions
 const signUpApi = async ({
   email,
   password,
@@ -12,7 +11,6 @@ const signUpApi = async ({
   displayName: string;
   timezone?: string;
 }) => {
-  // Use Firebase Auth SDK for client-side user creation
   const { createUserWithEmailAndPassword } = await import("firebase/auth");
   const { auth } = await import("@/lib/firebase/config");
 
@@ -23,10 +21,8 @@ const signUpApi = async ({
       password
     );
 
-    // Get the ID token for server-side profile creation
     const idToken = await userCredential.user.getIdToken();
 
-    // Create user profile on server
     const response = await fetch("/api/auth/signup", {
       method: "POST",
       headers: {
@@ -52,7 +48,6 @@ const signUpApi = async ({
       },
     };
   } catch (error) {
-    // Handle Firebase Auth errors
     if (error && typeof error === "object" && "code" in error) {
       const errorCode = error.code as string;
       switch (errorCode) {
@@ -81,7 +76,6 @@ const signInApi = async ({
   email: string;
   password: string;
 }) => {
-  // Use Firebase Auth SDK for client-side authentication
   const { signInWithEmailAndPassword } = await import("firebase/auth");
   const { auth } = await import("@/lib/firebase/config");
 
@@ -92,10 +86,8 @@ const signInApi = async ({
       password
     );
 
-    // Get the ID token for server-side verification if needed
     const idToken = await userCredential.user.getIdToken();
 
-    // Optionally verify with server
     const response = await fetch("/api/auth/verify", {
       method: "POST",
       headers: {
@@ -117,7 +109,6 @@ const signInApi = async ({
       },
     };
   } catch (error) {
-    // Handle Firebase Auth errors
     if (error && typeof error === "object" && "code" in error) {
       const errorCode = error.code as string;
       switch (errorCode) {
@@ -139,7 +130,6 @@ const signInApi = async ({
   }
 };
 
-// React Query hooks
 export const useSignUp = () => {
   return useMutation({
     mutationFn: signUpApi,

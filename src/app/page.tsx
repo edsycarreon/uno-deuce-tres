@@ -77,6 +77,7 @@ export default function HomePage() {
   };
 
   return (
+    // TODO instead of a tab system, the tabs should be a layout, but the screens should be routes.
     <AppLayout
       activeTab={activeTab}
       onTabChange={handleTabChange}
@@ -117,11 +118,7 @@ export default function HomePage() {
           aria-label="Log poop"
           disabled={logPoopStatus === "pending"}
         >
-          {logPoopStatus === "pending" ? (
-            <span className="animate-spin">💩</span>
-          ) : (
-            "💩"
-          )}
+          💩
         </Button>
       </div>
     </AppLayout>

@@ -9,8 +9,8 @@ import { GlobalErrorModal } from "@/components/ui/error-modal";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Poop Tracker",
-  description: "Track your bathroom activities and compete with friends!",
+  title: "Uno Deuce Tres",
+  description: "Poop with your friends",
   manifest: "/manifest.json",
 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Poop Tracker" />
+        <meta name="apple-mobile-web-app-title" content="Uno Deuce Tres" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.className} h-full antialiased`}>

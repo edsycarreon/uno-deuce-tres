@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -22,7 +22,7 @@ interface HeaderProps {
 }
 
 export function Header({
-  title = "Poop Tracker",
+  title = "Uno Deuce Tres",
   showMenu = false,
   onMenuClick,
   user,
@@ -63,7 +63,7 @@ export function Header({
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>
-                  {user.displayName.charAt(0).toUpperCase()}
+                  <User className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
             </Button>

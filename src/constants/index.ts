@@ -1,5 +1,5 @@
 // Application Configuration
-export const APP_NAME = "Poop Tracker";
+export const APP_NAME = "Uno Deuce Tres";
 export const APP_DESCRIPTION =
   "Track your bathroom activities and compete with friends!";
 

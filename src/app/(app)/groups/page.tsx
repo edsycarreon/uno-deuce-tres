@@ -73,49 +73,51 @@ export default function GroupsPage() {
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Join Group
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Join Group</DialogTitle>
-                <DialogDescription>
-                  Enter an invite code to join an existing group
-                </DialogDescription>
-              </DialogHeader>
-              <JoinGroupForm
-                onSuccess={handleJoinSuccess}
-                onCancel={() => setShowJoinDialog(false)}
-              />
-            </DialogContent>
-          </Dialog>
+        {groups.length > 0 && (
+          <div className="flex gap-2">
+            <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Join Group
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Join Group</DialogTitle>
+                  <DialogDescription>
+                    Enter an invite code to join an existing group
+                  </DialogDescription>
+                </DialogHeader>
+                <JoinGroupForm
+                  onSuccess={handleJoinSuccess}
+                  onCancel={() => setShowJoinDialog(false)}
+                />
+              </DialogContent>
+            </Dialog>
 
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Group
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create New Group</DialogTitle>
-                <DialogDescription>
-                  Start a new poop tracking group and invite your friends
-                </DialogDescription>
-              </DialogHeader>
-              <CreateGroupForm
-                onSuccess={handleCreateSuccess}
-                onCancel={() => setShowCreateDialog(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Group
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Group</DialogTitle>
+                  <DialogDescription>
+                    Start a new poop tracking group and invite your friends
+                  </DialogDescription>
+                </DialogHeader>
+                <CreateGroupForm
+                  onSuccess={handleCreateSuccess}
+                  onCancel={() => setShowCreateDialog(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
 
       {groups.length === 0 ? (

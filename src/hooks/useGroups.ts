@@ -92,9 +92,21 @@ export const useGroups = () => {
 
       return createGroup(groupDocData, userProfile);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups", userProfile?.id] });
-      queryClient.invalidateQueries({ queryKey: ["user", userProfile?.id] });
+    onSuccess: async () => {
+      // Invalidate both user and groups queries
+      await queryClient.invalidateQueries({
+        queryKey: ["user", userProfile?.id],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
+
+      // Refetch both queries to ensure immediate update
+      await queryClient.refetchQueries({ queryKey: ["user", userProfile?.id] });
+      await queryClient.refetchQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
+
       toast.success("Group created successfully!");
     },
     onError: (error: Error) => {
@@ -109,9 +121,21 @@ export const useGroups = () => {
       if (!userProfile) throw new Error("User not authenticated");
       return joinGroupByInviteCode(inviteCode, userProfile);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups", userProfile?.id] });
-      queryClient.invalidateQueries({ queryKey: ["user", userProfile?.id] });
+    onSuccess: async () => {
+      // Invalidate both user and groups queries
+      await queryClient.invalidateQueries({
+        queryKey: ["user", userProfile?.id],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
+
+      // Refetch both queries to ensure immediate update
+      await queryClient.refetchQueries({ queryKey: ["user", userProfile?.id] });
+      await queryClient.refetchQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
+
       toast.success("Successfully joined group!");
     },
     onError: (error: Error) => {
@@ -126,13 +150,20 @@ export const useGroups = () => {
       if (!userProfile) throw new Error("User not authenticated");
       return leaveGroup(groupId, userProfile.id);
     },
-    onSuccess: () => {
-      // Invalidate groups query to refetch the updated list
-      queryClient.invalidateQueries({ queryKey: ["groups", userProfile?.id] });
-      queryClient.invalidateQueries({ queryKey: ["user", userProfile?.id] });
+    onSuccess: async () => {
+      // Invalidate both user and groups queries
+      await queryClient.invalidateQueries({
+        queryKey: ["user", userProfile?.id],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
 
-      // Force refetch to ensure immediate update
-      refetch();
+      // Refetch both queries to ensure immediate update
+      await queryClient.refetchQueries({ queryKey: ["user", userProfile?.id] });
+      await queryClient.refetchQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
 
       toast.success("Left group successfully");
     },
@@ -148,13 +179,20 @@ export const useGroups = () => {
       if (!userProfile) throw new Error("User not authenticated");
       return deleteGroup(groupId, userProfile.id);
     },
-    onSuccess: () => {
-      // Invalidate groups query to refetch the updated list
-      queryClient.invalidateQueries({ queryKey: ["groups", userProfile?.id] });
-      queryClient.invalidateQueries({ queryKey: ["user", userProfile?.id] });
+    onSuccess: async () => {
+      // Invalidate both user and groups queries
+      await queryClient.invalidateQueries({
+        queryKey: ["user", userProfile?.id],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
 
-      // Force refetch to ensure immediate update
-      refetch();
+      // Refetch both queries to ensure immediate update
+      await queryClient.refetchQueries({ queryKey: ["user", userProfile?.id] });
+      await queryClient.refetchQueries({
+        queryKey: ["groups", userProfile?.id],
+      });
 
       toast.success("Group deleted successfully");
     },

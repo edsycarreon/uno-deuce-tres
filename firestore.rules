@@ -16,24 +16,47 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Groups - users can read groups they're members of, admins can write
+    // Groups - users can read groups they're members of, create new groups, and admins can update
     match /groups/{groupId} {
       allow read: if request.auth != null && 
-        (resource.data.memberIds[request.auth.uid] != null || 
+        (request.auth.uid in resource.data.memberIds || 
          resource.data.createdBy == request.auth.uid);
-      allow write: if request.auth != null && 
+      
+      // Allow creating new groups
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.createdBy &&
+        request.auth.uid in request.resource.data.memberIds;
+      
+      // Allow updates only by group creator/admin
+      allow update: if request.auth != null && 
         (resource.data.createdBy == request.auth.uid || 
          request.auth.uid in resource.data.memberIds);
+      
+      // Allow deletion only by group creator
+      allow delete: if request.auth != null && 
+        resource.data.createdBy == request.auth.uid;
     }
     
     // Group members - users can read members of groups they're in
     match /groups/{groupId}/members/{userId} {
       allow read: if request.auth != null && 
-        (resource.data.userId == request.auth.uid || 
+        (request.auth.uid == userId || 
          exists(/databases/$(database)/documents/groups/$(groupId)) &&
-         get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds[request.auth.uid] != null);
-      allow write: if request.auth != null && 
-        (resource.data.userId == request.auth.uid || 
+         request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds);
+      
+      // Allow creating member documents (when joining groups)
+      allow create: if request.auth != null && 
+        (request.auth.uid == userId || 
+         get(/databases/$(database)/documents/groups/$(groupId)).data.createdBy == request.auth.uid);
+      
+      // Allow updates by the user themselves or group admin
+      allow update: if request.auth != null && 
+        (request.auth.uid == userId || 
+         get(/databases/$(database)/documents/groups/$(groupId)).data.createdBy == request.auth.uid);
+      
+      // Allow deletion by the user themselves or group admin
+      allow delete: if request.auth != null && 
+        (request.auth.uid == userId || 
          get(/databases/$(database)/documents/groups/$(groupId)).data.createdBy == request.auth.uid);
     }
     
@@ -43,10 +66,18 @@ service cloud.firestore {
       allow write: if false; // Only backend should write these
     }
     
-    // Invite codes - anyone can read to validate
+    // Invite codes - anyone can read to validate, authenticated users can create/update
     match /inviteCodes/{code} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read: if request.auth != null;
+      
+      // Allow creating invite codes (when creating groups)
+      allow create: if request.auth != null;
+      
+      // Allow updating invite codes (when generating new ones or incrementing usage)
+      allow update: if request.auth != null;
+      
+      // Don't allow deletion of invite codes
+      allow delete: if false;
     }
   }
 } 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export default function ProfilePage() {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
+  const { userProfile } = useUserProfile();
 
   return (
     <div className="space-y-6 pt-2">

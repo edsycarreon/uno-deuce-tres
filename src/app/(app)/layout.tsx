@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { RootLayout } from "@/components/layout/root-layout";
 import { Header } from "@/components/layout/header";
 import { MainContent } from "@/components/layout/main-content";
@@ -14,7 +15,8 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { user, userProfile, isAuthenticated, logout, loading } = useAuth();
+  const { user, isAuthenticated, logout, loading } = useAuth();
+  const { userProfile } = useUserProfile();
   const router = useRouter();
 
   useEffect(() => {

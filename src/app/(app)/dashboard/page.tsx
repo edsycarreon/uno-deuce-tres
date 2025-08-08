@@ -5,12 +5,14 @@ import { useLogPoop, usePoopLogs } from "@/hooks/usePoopLogs";
 import { format } from "date-fns";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { getPoopLogKeysAndTimestamps } from "@/lib/utils/poopLogKeys";
 import { StatsCards } from "@/components/StatsCards";
 import { RecentActivity } from "@/components/RecentActivity";
 
 export default function DashboardPage() {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
+  const { userProfile } = useUserProfile();
   const { mutate: logPoop, status: logPoopStatus } = useLogPoop();
   const { handleError } = useErrorHandler();
   const {

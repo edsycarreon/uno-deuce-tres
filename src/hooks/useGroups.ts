@@ -12,8 +12,9 @@ import {
   getGroupByInviteCode,
   generateNewInviteCode,
   deleteGroup,
+  cleanupUserGroupReferences,
 } from "../lib/firebase/groups";
-import { useAuth } from "./useAuth";
+import { useUserProfile } from "./useUserProfile";
 import type {
   GroupDocument,
   GroupMemberDocument,
@@ -23,7 +24,7 @@ import type { CreateGroupFormData } from "../lib/validations/schemas";
 
 // Custom hook for managing user's groups
 export const useGroups = () => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const queryClient = useQueryClient();
 
   // Query to get user's groups
@@ -36,10 +37,41 @@ export const useGroups = () => {
     queryKey: ["groups", userProfile?.id],
     queryFn: async () => {
       if (!userProfile?.groups || userProfile.groups.length === 0) return [];
-      return getUserGroups(userProfile.groups);
+      try {
+        const groups = await getUserGroups(userProfile.groups);
+
+        // If we got fewer groups than expected, clean up the user's group references
+        if (groups.length < userProfile.groups.length) {
+          const validGroupIds = groups.map((group) => group.id);
+          // Clean up stale group references in the background
+          cleanupUserGroupReferences(
+            userProfile.id,
+            userProfile.groups,
+            validGroupIds
+          );
+        }
+
+        return groups;
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+        // If there's an error fetching groups (e.g., group doesn't exist anymore),
+        // return empty array to avoid showing error state
+        return [];
+      }
     },
     enabled: !!userProfile?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    // Retry failed requests to handle temporary network issues
+    retry: (failureCount, error) => {
+      // Don't retry if it's a Firestore "not found" error
+      if (
+        error?.message?.includes("not found") ||
+        error?.message?.includes("does not exist")
+      ) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   // Mutation to create a new group
@@ -95,8 +127,13 @@ export const useGroups = () => {
       return leaveGroup(groupId, userProfile.id);
     },
     onSuccess: () => {
+      // Invalidate groups query to refetch the updated list
       queryClient.invalidateQueries({ queryKey: ["groups", userProfile?.id] });
       queryClient.invalidateQueries({ queryKey: ["user", userProfile?.id] });
+
+      // Force refetch to ensure immediate update
+      refetch();
+
       toast.success("Left group successfully");
     },
     onError: (error: Error) => {
@@ -112,8 +149,13 @@ export const useGroups = () => {
       return deleteGroup(groupId, userProfile.id);
     },
     onSuccess: () => {
+      // Invalidate groups query to refetch the updated list
       queryClient.invalidateQueries({ queryKey: ["groups", userProfile?.id] });
       queryClient.invalidateQueries({ queryKey: ["user", userProfile?.id] });
+
+      // Force refetch to ensure immediate update
+      refetch();
+
       toast.success("Group deleted successfully");
     },
     onError: (error: Error) => {
@@ -162,7 +204,7 @@ export const useGroupMembers = (groupId: string | null) => {
 
 // Custom hook for invite code operations
 export const useInviteCode = () => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const queryClient = useQueryClient();
   const [previewData, setPreviewData] = useState<{
     group: GroupDocument;
@@ -235,7 +277,7 @@ export const useGroupLeaderboard = (groupId: string | null) => {
 
 // Utility function to check if user is admin of a group
 export const useIsGroupAdmin = (group: GroupDocument | null) => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   if (!userProfile || !group) return false;
 
@@ -244,7 +286,7 @@ export const useIsGroupAdmin = (group: GroupDocument | null) => {
 
 // Custom hook to get user's role in a specific group
 export const useUserGroupRole = (groupId: string | null) => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const { data: role, isLoading } = useQuery({
     queryKey: ["user-group-role", groupId, userProfile?.id],

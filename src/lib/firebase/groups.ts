@@ -4,7 +4,6 @@ import {
   getDoc,
   getDocs,
   query,
-  where,
   orderBy,
   writeBatch,
   serverTimestamp,
@@ -250,19 +249,68 @@ export const getUserGroups = async (
 
   const groups: GroupDocument[] = [];
 
-  // Firestore 'in' queries are limited to 10 items, so we need to batch them
-  const batchSize = 10;
-  for (let i = 0; i < groupIds.length; i += batchSize) {
-    const batch = groupIds.slice(i, i + batchSize);
-    const q = query(collection(db, "groups"), where("__name__", "in", batch));
+  // Fetch groups individually to handle missing/deleted groups gracefully
+  // This avoids permission errors when some groups in the batch don't exist
+  const groupPromises = groupIds.map(async (groupId) => {
+    try {
+      const groupDoc = await getDoc(doc(db, "groups", groupId));
+      if (groupDoc.exists()) {
+        return { ...groupDoc.data(), id: groupDoc.id } as GroupDocument;
+      }
+      // Group doesn't exist - this is expected when groups are deleted
+      return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      // Handle permission errors gracefully - this happens when trying to access
+      // a group that was deleted or when user is no longer a member
+      if (
+        error.code === "permission-denied" ||
+        error?.message?.includes("Missing or insufficient permissions")
+      ) {
+        console.log(
+          `No permission to access group ${groupId} (likely deleted)`
+        );
+        return null;
+      }
+      console.error(`Error fetching group ${groupId}:`, error);
+      return null;
+    }
+  });
 
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      groups.push({ ...doc.data(), id: doc.id } as GroupDocument);
-    });
-  }
+  const results = await Promise.all(groupPromises);
+
+  // Filter out null results (groups that don't exist or failed to fetch)
+  results.forEach((group) => {
+    if (group) {
+      groups.push(group);
+    }
+  });
 
   return groups;
+};
+
+// Clean up stale group references from user's profile
+export const cleanupUserGroupReferences = async (
+  userId: string,
+  currentGroupIds: string[],
+  validGroupIds: string[]
+): Promise<void> => {
+  // Only update if there are stale references
+  if (validGroupIds.length !== currentGroupIds.length) {
+    try {
+      const userRef = doc(db, `users/${userId}`);
+      const batch = writeBatch(db);
+      batch.update(userRef, { groups: validGroupIds });
+      await batch.commit();
+      console.log(
+        `Cleaned up ${
+          currentGroupIds.length - validGroupIds.length
+        } stale group references for user ${userId}`
+      );
+    } catch (error) {
+      console.error("Failed to cleanup user group references:", error);
+    }
+  }
 };
 
 // Get group members

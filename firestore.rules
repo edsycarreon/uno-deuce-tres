@@ -19,6 +19,7 @@ service cloud.firestore {
     // Groups - users can read groups they're members of, create new groups, and admins can update
     match /groups/{groupId} {
       allow read: if request.auth != null && 
+        resource != null &&
         (request.auth.uid in resource.data.memberIds || 
          resource.data.createdBy == request.auth.uid);
       

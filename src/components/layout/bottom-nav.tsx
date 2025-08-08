@@ -1,26 +1,30 @@
-import { Button } from "@/components/ui/button";
+"use client";
 
+import { Button } from "@/components/ui/button";
 import { Home, Users, Trophy, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter, usePathname } from "next/navigation";
 
 interface BottomNavProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
   className?: string;
 }
 
 const tabs = [
-  { id: "dashboard", label: "Home", icon: Home },
-  { id: "groups", label: "Groups", icon: Users },
-  { id: "leaderboard", label: "Leaderboard", icon: Trophy },
-  { id: "profile", label: "Profile", icon: User },
+  { id: "dashboard", label: "Home", icon: Home, path: "/dashboard" },
+  { id: "groups", label: "Groups", icon: Users, path: "/groups" },
+  {
+    id: "leaderboard",
+    label: "Leaderboard",
+    icon: Trophy,
+    path: "/leaderboard",
+  },
+  { id: "profile", label: "Profile", icon: User, path: "/profile" },
 ];
 
-export function BottomNav({
-  activeTab,
-  onTabChange,
-  className,
-}: BottomNavProps) {
+export function BottomNav({ className }: BottomNavProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   return (
     <nav
       className={cn(
@@ -36,13 +40,13 @@ export function BottomNav({
       <div className="flex items-center justify-around px-2 py-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+          const isActive = pathname === tab.path;
           return (
             <Button
               key={tab.id}
               variant="ghost"
               size="sm"
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => router.push(tab.path)}
               className={cn(
                 "flex flex-col items-center gap-1 h-auto py-2 px-3",
                 "text-xs font-medium",

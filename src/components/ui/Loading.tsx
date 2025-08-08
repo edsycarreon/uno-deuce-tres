@@ -20,7 +20,7 @@ export default function Loading() {
         style={{ fontSize: 80 }}
         animate={{
           y: [0, -30, 0],
-          rotate: [0, 360],
+          rotate: [0, 0],
         }}
         transition={{
           y: {

@@ -11,6 +11,8 @@
   --main: oklch(84.08% 0.1725 84.2);
   --border: oklch(0% 0 0);
   --ring: oklch(0% 0 0);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(0% 0 0);
   --overlay: oklch(0% 0 0 / 0.8);
   --shadow: 4px 4px 0px 0px var(--border);
   --chart-1: #ffbf00;
@@ -29,6 +31,8 @@
   --main: oklch(77.7% 0.1593880864006951 84.38427202675717);
   --border: oklch(0% 0 0);
   --ring: oklch(100% 0 0);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(0% 0 0);
   --shadow: 4px 4px 0px 0px var(--border);
   --chart-1: #e5ac00;
   --chart-2: #008ae5;
@@ -47,6 +51,8 @@
   --color-border: var(--border);
   --color-overlay: var(--overlay);
   --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -76,4 +82,34 @@
   h6 {
     @apply font-heading;
   }
+}
+
+/* Toast/Sonner custom styling for neobrutalism design */
+[data-sonner-toaster] {
+  --normal-bg: var(--popover) !important;
+  --normal-border: var(--border) !important;
+  --normal-text: var(--popover-foreground) !important;
+}
+
+[data-sonner-toast] {
+  background: var(--popover) !important;
+  border: 2px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  border-radius: 8px !important;
+  color: var(--popover-foreground) !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  background: var(--popover) !important;
+  border-color: oklch(84.08% 0.1725 84.2) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background: var(--popover) !important;
+  border-color: #ef4444 !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  background: var(--popover) !important;
+  border-color: #f59e0b !important;
 }

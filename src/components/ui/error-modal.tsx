@@ -86,7 +86,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
         </div>
 
         <DialogFooter>
-          <Button onClick={onClose} variant="outline">
+          <Button onClick={onClose} variant="default">
             Close
           </Button>
         </DialogFooter>

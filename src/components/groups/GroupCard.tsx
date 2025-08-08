@@ -21,6 +21,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
@@ -283,7 +284,7 @@ export const GroupCard = ({ group }: GroupCardProps) => {
               data will be permanently deleted.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2 justify-end">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setShowDeleteConfirm(false)}
@@ -292,13 +293,13 @@ export const GroupCard = ({ group }: GroupCardProps) => {
               Cancel
             </Button>
             <Button
-              variant="destructive"
+              variant="default"
               onClick={confirmDeleteGroup}
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Delete Group"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
